@@ -15,8 +15,8 @@ _start:
 /* Your code goes here  */
 loopA: beq r10, (r8), loopB
         beq r0, (r8), indexNotfound
-        addi r8, 4
-        addi r11, 1
+        addi r8, r8, 4
+        addi r11, r11, 1
         
         br loopA
 
@@ -28,7 +28,7 @@ loopB: ble r11, r0, storeIndex
 indexNotfound: movi r13, -1
 br iloop
 
-storeIndex: mov r13, r9
+storeIndex: ldw r13, (r9)
 br iloop
 
 iloop: br iloop
