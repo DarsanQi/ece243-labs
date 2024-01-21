@@ -7,10 +7,32 @@ _start:
 
 
 	movia r10, 718293		# r10 is where you put the student number being searched for
+        movia r8, Snumbers
+        movia r9, Grades
+        movi r11, 0
+
 
 /* Your code goes here  */
+loopA: beq r10, (r8), loopB
+        beq r0, (r8), indexNotfound
+        addi r8, 4
+        addi r11, 1
+        
+        br loopA
+
+loopB: ble r11, r0, storeIndex
+        addi r9, r9, 4
+        subi r11, r11, 1
+        br loopB
+
+indexNotfound: movi r13, -1
+br iloop
+
+storeIndex: mov r13, r9
+br iloop
 
 iloop: br iloop
+
 
 
 .data  	# the numbers that are the data 
