@@ -10,11 +10,13 @@ _start:
         movia r8, Snumbers
         movia r9, Grades
         movi r11, 0
+        movi r12, 0
 
 
 /* Your code goes here  */
-loopA: beq r10, (r8), loopB
-        beq r0, (r8), indexNotfound
+loopA: ldw r12, (r8)
+        beq r10, r12, loopB
+        beq r0, r12, indexNotfound
         addi r8, r8, 4
         addi r11, r11, 1
         
@@ -47,6 +49,7 @@ Snumbers: .word 10392584, 423195, 644370, 496059, 296800
         .word 265133, 68943, 718293, 315950, 785519
         .word 982966, 345018, 220809, 369328, 935042
         .word 467872, 887795, 681936, 0
+
 
 /* Grades is the corresponding "array" with the grades, in the same order*/
 Grades: .word 99, 68, 90, 85, 91, 67, 80
