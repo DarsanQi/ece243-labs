@@ -20,7 +20,7 @@ add r10, r11, r10
 srli r9, r9, 1
 br loop
 
-secondloop: stw r13, (r10)
+secondloop: stw r10, (r13)
 br endiloop
 
 endiloop: br endiloop
