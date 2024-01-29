@@ -1,4 +1,10 @@
 .text
+/*
+The delay count in the simulator is much slower. It is more expensive in the simulator to count down as its a web based 
+simulator where processes are more expensive. The hardware is low-level and runs very quickly according to its clock speed
+*/
+
+
 /* Program to Count the number of 1’s and Zeroes in a sequence of 32-bit words,
 and determines the largest of each */
 .global _start
