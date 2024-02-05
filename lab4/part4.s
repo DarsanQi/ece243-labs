@@ -40,7 +40,7 @@ continue:
     beq r11, r0, BIG_LOOP
 
     addi r8, r8, 1
-    movia r11, 10000000
+    movia r11, 1000000
     beq r8, r11, increment_hundredths
     br BIG_LOOP
 
