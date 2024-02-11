@@ -15,7 +15,7 @@
 _start:
 
 movi r9, 0 #start a counter
-movi r12, 2 #counter limit
+movia r12, 100000 #limit for counter
 movi r13, 17 #limit for HEX display
 movi r15, 5
 #enable timer
@@ -38,7 +38,7 @@ hexloop:
 	ldwio r8, 0(r10) #read the timer
 	andi r8, r8, 0b1 #extract the TO bit
 	addi r9, r9, 1 #increment the counter
-	beq r9, r12, increment_display #if counter is 2, increment the HEX display
+	beq r9, r12, increment_display #if counter is counter limit, increment the HEX display
 	br hexloop #else, keep looping
 
 increment_display:
