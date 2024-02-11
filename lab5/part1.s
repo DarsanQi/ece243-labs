@@ -15,7 +15,7 @@
 _start:
 
 movi r9, 0 #start a counter
-movia r12, 100000 #limit for counter
+movia r12, 500000 #limit for counter
 movi r13, 17 #limit for HEX display
 movi r15, 5
 #enable timer
