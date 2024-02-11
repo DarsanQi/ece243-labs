@@ -20,6 +20,7 @@ movi r9, 0 #start a counter
 movi r12, 2 #counter limit
 movi r13, 16, #limit for HEX display
 movi r14, 0b100000 #
+movi r15, 5
 #enable timer
 movia r10, TIMER
 movi r11, 0b110
@@ -41,8 +42,12 @@ increment_display:
 	br hexloop #else, keep looping
 
 shift_display:
-	
-
+	beq r5, r15, reset_display #if HEX display is 5, set it back to 1
+	addi r5, r5, 1 #else, increment the HEX display
+	br hexloop #keep looping
+reset_display:
+	movi r5, 0b1 #reset HEX display to 1
+	br hexloop #keep looping
 
 
 
