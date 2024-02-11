@@ -28,6 +28,7 @@ movi r11, 0b0 #starts with HEX0
 movi r14, 0b0 #starts with 0
 
 movi r4, 16 #blank the HEX display
+call HEX_DISP
 
 hexloop:
 	mov r4, r14 #move the HEX display to r4
@@ -41,6 +42,7 @@ hexloop:
 	br hexloop #else, keep looping
 
 increment_display:
+	movi r9, 0 #reset the counter
 	addi r14, r14, 1 #increment the HEX display
 	beq r14, r13, shift_display #if HEX display is 16, shift the display
 	br hexloop #else, keep looping
