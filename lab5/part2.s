@@ -28,16 +28,18 @@ END_ISR:
         eret                        # return from exception
 
 KEY_ISR:
-        andi r11, 12(r15), 0b0001 # check if KEY0 was pressed
+        stwio r13, 12(r15)        # store the edge capture registers
+
+        andi r11, r13, 0b0001 # check if KEY0 was pressed
         bne r11, r0, KEY0_PRESSED
 
-        andi r11, 12(r15), 0b0010 # check if KEY1 was pressed
+        andi r11, r13, 0b0010 # check if KEY1 was pressed
         bne r11, r0, KEY1_PRESSED
 
-        andi r11, 12(r15), 0b0100 # check if KEY2 was pressed
+        andi r11, r13, 0b0100 # check if KEY2 was pressed
         bne r11, r0, KEY2_PRESSED
 
-        andi r11, 12(r15), 0b1000 # check if KEY3 was pressed
+        andi r11, r13, 0b1000 # check if KEY3 was pressed
         bne r11, r0, KEY3_PRESSED
 
 KEY0_PRESSED:
