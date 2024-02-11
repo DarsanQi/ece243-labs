@@ -53,7 +53,7 @@ shift_display:
 	addi r11, r11, 1 #else, increment the HEX display
 	br hexloop #keep looping
 reset_display:
-	movi r11, 0b1 #reset HEX display to 1
+	movi r11, 0b0 #reset HEX display to 0
 	br hexloop #keep looping
 
 
