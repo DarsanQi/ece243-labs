@@ -27,6 +27,8 @@ stwio r11, 4(r10)
 movi r11, 0b0 #starts with HEX0
 movi r14, 0b0 #starts with 0
 
+movi r4, 16 #blank the HEX display
+
 hexloop:
 	mov r4, r14 #move the HEX display to r4
 	mov r5, r11 #move the HEX number to r5
