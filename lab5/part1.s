@@ -48,6 +48,7 @@ increment_display:
 	br hexloop #else, keep looping
 
 shift_display:
+	movi r14, 0b0 #reset HEX display to 0
 	beq r11, r15, reset_display #if HEX display is 5, set it back to 1
 	addi r11, r11, 1 #else, increment the HEX display
 	br hexloop #keep looping
