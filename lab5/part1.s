@@ -9,6 +9,47 @@
 
 .equ HEX_BASE1, 0xff200020
 .equ HEX_BASE2, 0xff200030
+.equ TIMER, 0xff202000
+
+.global  _start
+_start:
+
+movi r5, 0b1 #starts with HEX0
+movi r4, 0b0 #starts with 0
+movi r9, 0 #start a counter
+movi r12, 2 #counter limit
+movi r13, 16, #limit for HEX display
+movi r14, 0b100000 #
+#enable timer
+movia r10, TIMER
+movi r11, 0b110
+stwio r11, 4(r10)
+
+
+hexloop:
+	call HEX_DISP
+#poll for timer over
+	ldwio r8, 0(r10) #read the timer
+	andi r8, r8, 0b1 #extract the TO bit
+	addi r9, r9, 1 #increment the counter
+	beq r9, r12, increment_display #if counter is 2, increment the HEX display
+	br hexloop #else, keep looping
+
+increment_display:
+	addi, r4, r4, 1 #increment the HEX display
+	beq r4, r13, shift_display #if HEX display is 16, shift the display
+	br hexloop #else, keep looping
+
+shift_display:
+	
+
+
+
+
+
+
+
+iloop: br iloop
 
 HEX_DISP:   movia    r8, BIT_CODES         # starting address of the bit codes
 	    andi     r6, r4, 0x10	   # get bit 4 of the input into r6
