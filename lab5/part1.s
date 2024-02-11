@@ -14,12 +14,9 @@
 .global  _start
 _start:
 
-movi r5, 0b1 #starts with HEX0
-movi r4, 0b0 #starts with 0
 movi r9, 0 #start a counter
 movi r12, 2 #counter limit
 movi r13, 16 #limit for HEX display
-movi r14, 0b100000 #
 movi r15, 5
 #enable timer
 movia r10, TIMER
@@ -27,7 +24,12 @@ movi r11, 0b110
 stwio r11, 4(r10)
 
 
+movi r11, 0b0 #starts with HEX0
+movi r14, 0b0 #starts with 0
+
 hexloop:
+	mov r4, r14 #move the HEX display to r4
+	mov r5, r11 #move the HEX number to r5
 	call HEX_DISP
 #poll for timer over
 	ldwio r8, 0(r10) #read the timer
@@ -37,16 +39,16 @@ hexloop:
 	br hexloop #else, keep looping
 
 increment_display:
-	addi r4, r4, 1 #increment the HEX display
-	beq r4, r13, shift_display #if HEX display is 16, shift the display
+	addi r14, r14, 1 #increment the HEX display
+	beq r14, r13, shift_display #if HEX display is 16, shift the display
 	br hexloop #else, keep looping
 
 shift_display:
-	beq r5, r15, reset_display #if HEX display is 5, set it back to 1
-	addi r5, r5, 1 #else, increment the HEX display
+	beq r11, r15, reset_display #if HEX display is 5, set it back to 1
+	addi r11, r11, 1 #else, increment the HEX display
 	br hexloop #keep looping
 reset_display:
-	movi r5, 0b1 #reset HEX display to 1
+	movi r11, 0b1 #reset HEX display to 1
 	br hexloop #keep looping
 
 
