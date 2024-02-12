@@ -4,7 +4,7 @@
 .section .exceptions, "ax"
 IRQ_HANDLER:
         # save registers on the stack (et, ra, ea, others as needed)
-        subi    sp, sp, 48         # make room on the stack
+        subi    sp, sp, 44         # make room on the stack
         stw     et, 0(sp)
         stw     ra, 4(sp)
         stw     r20, 8(sp)
@@ -15,14 +15,13 @@ IRQ_HANDLER:
         stw     r11, 28(sp)         # save r11 for the HEX_DISP
         stw     r5, 32(sp)          # save r5 for the HEX_DISP
         stw     r13, 36(sp) # save r13 for the HEX_DISP
-        stw     r14, 40(sp) # save r14 for the HEX_DISP
 
         rdctl   et, ctl4            # read exception type
         beq     et, r0, SKIP_EA_DEC # not external?
         subi    ea, ea, 4           # decrement ea by 4 for external interrupts
 
 SKIP_EA_DEC:
-        stw     ea, 44(sp)
+        stw     ea, 40(sp)
         andi    r20, et, 0x2        # check if interrupt is from pushbuttons
         beq     r20, r0, END_ISR    # if not, ignore this interrupt
         br    KEY_ISR             # if yes, call the pushbutton ISR
@@ -38,9 +37,8 @@ END_ISR:
         ldw    r11, 28(sp)         # restore r11 for the HEX_DISP
         ldw    r5, 32(sp) # restore r13 for the HEX_DISP
         ldw    r13, 36(sp)          # restore stack pointer
-        ldw    r14, 40(sp)          # restore r14 for the HEX_DISP
-        ldw     ea, 44(sp)
-        addi    sp, sp, 48         # restore stack pointer
+        ldw     ea, 40(sp)
+        addi    sp, sp, 44         # restore stack pointer
         eret                        # return from exception
 
 KEY_ISR:
@@ -59,7 +57,8 @@ KEY_ISR:
         bne r11, r0, KEY3_PRESSED
 
 KEY0_PRESSED:   
-        andi r8, r14, 0b1 # check if HEX0 is on
+        ldw r8, 0(r14) # load the one hot encoding of the HEX display
+        andi r8, r8, 0b1 # check if HEX0 is on
         bne r8, r0, HEX0_ON
 
         movi r4, 0
@@ -67,10 +66,14 @@ KEY0_PRESSED:
         call HEX_DISP
         movi r8, 0b1
         stwio r8, 12(r15) # reset the edge capture bit
-        addi r14, r14, 0b1 # turn on HEX0
+        ldw r8, 0(r14) # load the one hot encoding of the HEX display
+        addi r8, r8, 0b1 # turn on HEX0
+        stw r8, 0(r14) # store the one hot encoding of the HEX display
         br END_ISR
 HEX0_ON:
-        andi r14, r14, 0b1110 # turn off HEX0
+        ldw r8, 0(r14) # load the one hot encoding of the HEX display
+        andi r8, r8, 0b1110 # turn off HEX0
+        stw r8, 0(r14) # store the one hot encoding of the HEX display
         movi r4, 16
         movi r5, 0
         call HEX_DISP
@@ -80,7 +83,8 @@ HEX0_ON:
 
 
 KEY1_PRESSED:
-        andi r8, r14, 0b10 # check if HEX1 is on
+        ldw r8, 0(r14) # load the one hot encoding of the HEX display
+        andi r8, r8, 0b10 # check if HEX1 is on
         bne r8, r0, HEX1_ON
 
         movi r4, 1
@@ -88,10 +92,14 @@ KEY1_PRESSED:
         call HEX_DISP
         movi r8, 0b10
         stwio r8, 12(r15) # reset the edge capture bit
-        addi r14, r14, 0b10 # turn on HEX1
+        ldw r8, 0(r14) # load the one hot encoding of the HEX display
+        addi r8, r8, 0b10 # turn on HEX1
+        stw r8, 0(r14) # store the one hot encoding of the HEX display
         br END_ISR
 HEX1_ON:
-        andi r14, r14, 0b1101 # turn off HEX1
+        ldw r8, 0(r14) # load the one hot encoding of the HEX display
+        andi r8, r8, 0b1101 # turn off HEX1
+        stw r8, 0(r14) # store the one hot encoding of the HEX display
         movi r4, 16
         movi r5, 1
         call HEX_DISP
@@ -100,7 +108,8 @@ HEX1_ON:
         br END_ISR        
 
 KEY2_PRESSED:
-        andi r8, r14, 0b100 # check if HEX2 is on
+        ldw r8, 0(r14) # load the one hot encoding of the HEX display
+        andi r8, r8, 0b100 # check if HEX2 is on
         bne r8, r0, HEX2_ON
 
         movi r4, 2
@@ -108,10 +117,14 @@ KEY2_PRESSED:
         call HEX_DISP
         movi r8, 0b100
         stwio r8, 12(r15) # reset the edge capture bit
-        addi r14, r14, 0b100 # turn on HEX2
+        ldw r8, 0(r14) # load the one hot encoding of the HEX display
+        addi r8, r8, 0b100 # turn on HEX2
+        stw r8, 0(r14) # store the one hot encoding of the HEX display
         br END_ISR
 HEX2_ON:
-        andi r14, r14, 0b1011 # turn off HEX2
+        ldw r8, 0(r14) # load the one hot encoding of the HEX display
+        andi r8, r8, 0b1011 # turn off HEX2
+        stw r8, 0(r14) # store the one hot encoding of the HEX display
         movi r4, 16
         movi r5, 2
         call HEX_DISP
@@ -120,8 +133,8 @@ HEX2_ON:
         br END_ISR        
 
 KEY3_PRESSED:
-
-        andi r8, r14, 0b1000 # check if HEX3 is on
+        ldw r8, 0(r14) # load the one hot encoding of the HEX display
+        andi r8, r8, 0b1000 # check if HEX3 is on
         bne r8, r0, HEX3_ON
 
         movi r4, 3
@@ -129,10 +142,14 @@ KEY3_PRESSED:
         call HEX_DISP
         movi r8, 0b1000
         stwio r8, 12(r15) # reset the edge capture bit
-        addi r14, r14, 0b1000 # turn on HEX3
+        ldw r8, 0(r14) # load the one hot encoding of the HEX display
+        addi r8, r8, 0b1000 # turn on HEX3
+        stw r8, 0(r14) # store the one hot encoding of the HEX display
         br END_ISR
 HEX3_ON:
-        andi r14, r14, 0b0111 # turn off HEX3
+        ldw r8, 0(r14) # load the one hot encoding of the HEX display
+        andi r8, r8, 0b0111 # turn off HEX3
+        stw r8, 0(r14) # store the one hot encoding of the HEX display
         movi r4, 16
         movi r5, 3
         call HEX_DISP
@@ -174,7 +191,9 @@ _start:
         movi r5, 3
         call HEX_DISP
 
-        movi r14, 0b0000 # one hot encoding for whether the HEX display is on or off
+        movia r14, 0x10000 # address to store one hot encoding of the HEX display
+        movi r8, 0b0000 
+        stw r8, 0(r14) # reset the one hot encoding
 
         movia sp, 0x20000 #set the stack pointer
         movi r8, 0b1111
