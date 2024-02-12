@@ -4,31 +4,47 @@
 .section .exceptions, "ax"
 IRQ_HANDLER:
         # save registers on the stack (et, ra, ea, others as needed)
-        subi    sp, sp, 16          # make room on the stack
+        subi    sp, sp, 48         # make room on the stack
         stw     et, 0(sp)
         stw     ra, 4(sp)
         stw     r20, 8(sp)
+        stw     r2, 12(sp)          # save r2 for the HEX_DISP 
+        stw     r4, 16(sp)          # save r4 for the HEX_DISP
+        stw     r7, 20(sp)          # save r7 for the HEX_DISP
+        stw     r8, 24(sp)          # save r8 for the HEX_DISP
+        stw     r11, 28(sp)         # save r11 for the HEX_DISP
+        stw     r5, 32(sp)          # save r5 for the HEX_DISP
+        stw     r13, 36(sp) # save r13 for the HEX_DISP
+        stw     r14, 40(sp) # save r14 for the HEX_DISP
 
         rdctl   et, ctl4            # read exception type
         beq     et, r0, SKIP_EA_DEC # not external?
         subi    ea, ea, 4           # decrement ea by 4 for external interrupts
 
 SKIP_EA_DEC:
-        stw     ea, 12(sp)
+        stw     ea, 44(sp)
         andi    r20, et, 0x2        # check if interrupt is from pushbuttons
         beq     r20, r0, END_ISR    # if not, ignore this interrupt
-        call    KEY_ISR             # if yes, call the pushbutton ISR
+        br    KEY_ISR             # if yes, call the pushbutton ISR
 
 END_ISR:
         ldw     et, 0(sp)           # restore registers
         ldw     ra, 4(sp)
         ldw     r20, 8(sp)
-        ldw     ea, 12(sp)
-        addi    sp, sp, 16          # restore stack pointer
+        ldw    r2, 12(sp)          # restore r2 for the HEX_DISP
+        ldw    r4, 16(sp)          # restore r4 for the HEX_DISP
+        ldw    r7, 20(sp)          # restore r7 for the HEX_DISP
+        ldw    r8, 24(sp)          # restore r8 for the HEX_DISP
+        ldw    r11, 28(sp)         # restore r11 for the HEX_DISP
+        ldw    r5, 32(sp) # restore r13 for the HEX_DISP
+        ldw    r13, 36(sp)          # restore stack pointer
+        ldw    r14, 40(sp)          # restore r14 for the HEX_DISP
+        ldw     ea, 44(sp)
+        addi    sp, sp, 48         # restore stack pointer
         eret                        # return from exception
 
 KEY_ISR:
-        stwio r13, 12(r15)        # store the edge capture registers
+        ldwio r13, 12(r15) # load the edge capture registers
 
         andi r11, r13, 0b0001 # check if KEY0 was pressed
         bne r11, r0, KEY0_PRESSED
@@ -42,29 +58,87 @@ KEY_ISR:
         andi r11, r13, 0b1000 # check if KEY3 was pressed
         bne r11, r0, KEY3_PRESSED
 
-KEY0_PRESSED:
+KEY0_PRESSED:   
+        andi r8, r14, 0b1 # check if HEX0 is on
+        bne r8, r0, HEX0_ON
+
         movi r4, 0
         movi r5, 0
         call HEX_DISP
+        movi r8, 0b1
+        stwio r8, 12(r15) # reset the edge capture bit
+        addi r14, r14, 0b1 # turn on HEX0
+        br END_ISR
+HEX0_ON:
+        andi r14, r14, 0b1110 # turn off HEX0
+        movi r4, 16
+        movi r5, 0
+        call HEX_DISP
+        movi r8, 0b1
+        stwio r8, 12(r15) # reset the edge capture bit
         br END_ISR
 
+
 KEY1_PRESSED:
+        andi r8, r14, 0b10 # check if HEX1 is on
+        bne r8, r0, HEX1_ON
+
         movi r4, 1
         movi r5, 1
         call HEX_DISP
+        movi r8, 0b10
+        stwio r8, 12(r15) # reset the edge capture bit
+        addi r14, r14, 0b10 # turn on HEX1
         br END_ISR
+HEX1_ON:
+        andi r14, r14, 0b1101 # turn off HEX1
+        movi r4, 16
+        movi r5, 1
+        call HEX_DISP
+        movi r8, 0b10
+        stwio r8, 12(r15) # reset the edge capture bit
+        br END_ISR        
 
 KEY2_PRESSED:
+        andi r8, r14, 0b100 # check if HEX2 is on
+        bne r8, r0, HEX2_ON
+
         movi r4, 2
         movi r5, 2
         call HEX_DISP
+        movi r8, 0b100
+        stwio r8, 12(r15) # reset the edge capture bit
+        addi r14, r14, 0b100 # turn on HEX2
         br END_ISR
+HEX2_ON:
+        andi r14, r14, 0b1011 # turn off HEX2
+        movi r4, 16
+        movi r5, 2
+        call HEX_DISP
+        movi r8, 0b100
+        stwio r8, 12(r15) # reset the edge capture bit
+        br END_ISR        
 
 KEY3_PRESSED:
+
+        andi r8, r14, 0b1000 # check if HEX3 is on
+        bne r8, r0, HEX3_ON
+
         movi r4, 3
         movi r5, 3
         call HEX_DISP
+        movi r8, 0b1000
+        stwio r8, 12(r15) # reset the edge capture bit
+        addi r14, r14, 0b1000 # turn on HEX3
         br END_ISR
+HEX3_ON:
+        andi r14, r14, 0b0111 # turn off HEX3
+        movi r4, 16
+        movi r5, 3
+        call HEX_DISP
+        movi r8, 0b1000
+        stwio r8, 12(r15) # reset the edge capture bit
+        br END_ISR        
 
 /*********************************************************************************
  * set where to go upon reset
@@ -85,14 +159,31 @@ _start:
         2. set up keys to generate interrupts
         3. enable interrupts in NIOS II
         */
-        movia sp, 0x20000
+
+        #clear all the displays
+        movi r4, 16
+        movi r5, 0
+        call HEX_DISP
+        movi r4, 16
+        movi r5, 1
+        call HEX_DISP
+        movi r4, 16
+        movi r5, 2
+        call HEX_DISP
+        movi r4, 16
+        movi r5, 3
+        call HEX_DISP
+
+        movi r14, 0b0000 # one hot encoding for whether the HEX display is on or off
+
+        movia sp, 0x20000 #set the stack pointer
+        movi r8, 0b1111
+        stwio r8, 8(r15) # enable interrupts for all pushbuttons
+        stwio r8, 12(r15) # reset all edge capture bits        
         movi r8, 1
         wrctl ctl0, r8 # enable interrupts
         movi r8, 0b10
         wrctl ctl3, r8 # enable pushbutton interrupts
-        movi r8, 0b1111
-        stwio r8, 8(r15) # enable interrupts for all pushbuttons
-        stwio r8, 12(r15) # reset all edge capture bits
 
 IDLE:   br  IDLE
 
