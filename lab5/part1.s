@@ -37,6 +37,7 @@ hexloop:
 #poll for timer over
 	ldwio r8, 0(r10) #read the timer
 	andi r8, r8, 0b1 #extract the TO bit
+	beq r8, r0, hexloop
 	addi r9, r9, 1 #increment the counter
 	beq r9, r12, increment_display #if counter is counter limit, increment the HEX display
 	br hexloop #else, keep looping
