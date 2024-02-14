@@ -49,6 +49,24 @@ KEY_ISR:
         andi r15, r14, 0b1000 # check if KEY3 was pressed
         bne r15, r0, KEY3_PRESSED
 
+TIMER_ISR:
+        ldw r14, (r11)
+        slli r14, r14, 1
+        ldwio r15, 0(r13)
+        add r14, r14, r15
+        stwio r14, 0(r13)
+
+        
+        ldwio r14, 0(r13) #read the timer
+        andi r14, r14, 0b1 #extract the TO bit
+        #if timer has not counted 0.25 seconds, repeat
+        beq r14, r0, LOOP
+        #Otherwise
+        ldw r14, (r9)
+        addi r14, r14, 1 #increment the counter
+        stw r14, 0(r9)
+
+
 KEY0_PRESSED:
         br ADJUST_TIMER
 
@@ -105,20 +123,6 @@ _start:
     #store base addresses into registers
 
 LOOP:
-    # ldw r14, (r11)
-    # slli r14, r14, 1
-    # ldwio r15, 0(r13)
-    # add r14, r14, r15
-    # stwio r14, 0(r13)
-    ldwio r14, 0(r13) #read the timer
-	andi r14, r14, 0b1 #extract the TO bit
-    #if timer has not counted 0.25 seconds, repeat
-    beq r14, r0, LOOP
-    #Otherwise
-    ldw r14, (r9)
-	addi r14, r14, 1 #increment the counter
-    stw r14, 0(r9)
-
     ldw     r10, 0(r9)          # global variable
     stwio   r10, 0(r8)          # write to the LEDR lights
     br      LOOP
