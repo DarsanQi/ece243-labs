@@ -18,8 +18,10 @@ IRQ_HANDLER:
 SKIP_EA_DEC:
         stw     ea, 24(sp)
         andi    r20, et, 0x2        # check if interrupt is from pushbuttons
-        beq     r20, r0, END_ISR    # if not, ignore this interrupt
-        br    KEY_ISR             # if yes, call the pushbutton ISR
+        bne    r20, r0, KEY_ISR    # if yes, call the pushbutton ISR
+        andi    r20, et, 0x1        # check if interrupt is from timer
+        bne    r20, r0, TIMER_ISR  # if yes, call the timer ISR
+        br      END_ISR             # otherwise, return from exception
 
 END_ISR:
         movi r14, 0b1111
@@ -36,36 +38,28 @@ END_ISR:
 
 KEY_ISR:
         ldwio r14, 12(r12)        # store the edge capture registers
+        andi r14, r14, 0b0001 # check if KEY0 was pressed
+        bne r14, r0, KEY0_PRESSED
 
-        andi r15, r14, 0b0001 # check if KEY0 was pressed
-        bne r15, r0, KEY0_PRESSED
+        ldwio r14, 12(r12)        # store the edge capture registers
+        andi r14, r14, 0b0010 # check if KEY1 was pressed
+        bne r14, r0, KEY1_PRESSED
 
-        andi r15, r14, 0b0010 # check if KEY1 was pressed
-        bne r15, r0, KEY1_PRESSED
+        ldwio r14, 12(r12)        # store the edge capture registers
+        andi r14, r14, 0b0100 # check if KEY2 was pressed
+        bne r14, r0, KEY2_PRESSED
 
-        andi r15, r14, 0b0100 # check if KEY2 was pressed
-        bne r15, r0, KEY2_PRESSED
-
-        andi r15, r14, 0b1000 # check if KEY3 was pressed
-        bne r15, r0, KEY3_PRESSED
+        ldwio r14, 12(r12)        # store the edge capture registers
+        andi r14, r14, 0b1000 # check if KEY3 was pressed
+        bne r14, r0, KEY3_PRESSED
 
 TIMER_ISR:
-        ldw r14, (r11)
-        slli r14, r14, 1
-        ldwio r15, 0(r13)
-        add r14, r14, r15
-        stwio r14, 0(r13)
-
-        
-        ldwio r14, 0(r13) #read the timer
-        andi r14, r14, 0b1 #extract the TO bit
-        #if timer has not counted 0.25 seconds, repeat
-        beq r14, r0, LOOP
-        #Otherwise
-        ldw r14, (r9)
-        addi r14, r14, 1 #increment the counter
-        stw r14, 0(r9)
-
+        ldw r14, 0(r9)            # load the global variable COUNT
+        addi r14, r14, 1          # increment COUNT
+        stw r14, 0(r9)            # store the global variable COUNT
+        movi r14, 0
+        stwio r14, 0(r13)         # clear the interrupt
+        br END_ISR
 
 KEY0_PRESSED:
         br ADJUST_TIMER
@@ -80,18 +74,23 @@ KEY3_PRESSED:
         br ADJUST_TIMER                         # code not shown
 
 ADJUST_TIMER:
-    ldw r15, (r11)
-    beq r15, r0, CONTINUE_TIMER
+    ldw r14, (r11)
+    beq r14, r0, CONTINUE_TIMER
     br PAUSE_TIMER
 
 CONTINUE_TIMER:
-    movi r11, 1
-    stw r15, 0(r11)
+    movi r14, 1
+    stw r14, 0(r11)
+    movi r14, 0b111
+    stwio r14, 4(r13)
     br END_ISR
 
 PAUSE_TIMER:
-    movi r11, 0
-    stw r15, 0(r11)
+    movi r14, 0
+    stw r14, 0(r11)
+
+    movi r14, 0b1011 
+    stwio r14, 4(r13)
     br END_ISR
 
 
@@ -107,8 +106,7 @@ _start:
 
     /* Set up stack pointer */
     movia sp, 0x20000
-	
-	movia   r8, LED_BASE        # LEDR base address (0xFF200000)
+    movia   r8, LED_BASE        # LEDR base address (0xFF200000)
     movia   r9, COUNT           # global variable
     movia   r11, RUN            #RUN global variable
     movia   r12, KEY_BASE        # Key base address
@@ -116,8 +114,8 @@ _start:
     call    CONFIG_TIMER        # configure the Timer
     call    CONFIG_KEYS         # configure the KEYs port
     /* Enable interrupts in the NIOS-II processor */
-    movi r15, 1
-    wrctl ctl0, r15 # enable interrupts
+    movi r14, 1
+    wrctl ctl0, r14 # enable interrupts
 
 
     #store base addresses into registers
@@ -128,26 +126,22 @@ LOOP:
     br      LOOP
 
 CONFIG_TIMER:                # code not shown
-movi r14, 0b110
-stwio r14, 4(r13) #enable the counter and have it continue
 movia r14, LOWBITS
 stwio r14, 8(r13)
 movia r14, HIGHBITS
 stwio r14, 12(r13)
-
-
+movi r14, 0b111
+stwio r14, 4(r13) #enable the counter and have it continue
 ret
-
 
 CONFIG_KEYS:                # code not shown
 movi r14, 0b1111
 stwio r14, 8(r12) # enable interrupts for all pushbuttons
 stwio r14, 12(r12) # reset all edge capture bits 
-
-movi r14, 0b10
-wrctl ctl3, r14 # enable pushbutton interrupts
-
+movi r14, 0b11
+wrctl ctl3, r14 # enable pushbutton interrupts in the processor
 ret
+
 .data
 /* Global variables */
 .global  COUNT
