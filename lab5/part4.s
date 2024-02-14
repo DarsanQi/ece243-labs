@@ -1,142 +1,192 @@
-/******************************************************************************
- * Write an interrupt service routine
- *****************************************************************************/
+
+
 .section .exceptions, "ax"
 IRQ_HANDLER:
         # save registers on the stack (et, ra, ea, others as needed)
-        subi    sp, sp, 16          # make room on the stack
+        subi    sp, sp, 28         # make room on the stack
         stw     et, 0(sp)
         stw     ra, 4(sp)
         stw     r20, 8(sp)
+        stw     r11, 12(sp)
+        stw     r14, 16(sp)
+        stw     r15, 20(sp)
 
         rdctl   et, ctl4            # read exception type
         beq     et, r0, SKIP_EA_DEC # not external?
         subi    ea, ea, 4           # decrement ea by 4 for external interrupts
 
 SKIP_EA_DEC:
-        stw     ea, 12(sp)
+        stw     ea, 24(sp)
         andi    r20, et, 0x2        # check if interrupt is from pushbuttons
-        beq     r20, r0, END_ISR    # if not, ignore this interrupt
-        call    KEY_ISR             # if yes, call the pushbutton ISR
+        bne    r20, r0, KEY_ISR    # if yes, call the pushbutton ISR
+        andi    r20, et, 0x1        # check if interrupt is from timer
+        bne    r20, r0, TIMER_ISR  # if yes, call the timer ISR
+        br      END_ISR             # otherwise, return from exception
 
 END_ISR:
+        movi r14, 0b1111
+        stwio r14, 12(r12)
         ldw     et, 0(sp)           # restore registers
         ldw     ra, 4(sp)
         ldw     r20, 8(sp)
-        ldw     ea, 12(sp)
-        addi    sp, sp, 16          # restore stack pointer
+        ldw     r11, 12(sp)
+        ldw     r14, 16(sp)
+        ldw     r15, 20(sp)
+        ldw     ea, 24(sp)
+        addi    sp, sp, 28          # restore stack pointer
         eret                        # return from exception
 
 KEY_ISR:
-        stwio r13, 12(r15)        # store the edge capture registers
+        ldwio r14, 12(r12)        # store the edge capture registers
+        andi r14, r14, 0b0001 # check if KEY0 was pressed
+        bne r14, r0, KEY0_PRESSED
 
-        andi r11, r13, 0b0001 # check if KEY0 was pressed
-        bne r11, r0, KEY0_PRESSED
+        ldwio r14, 12(r12)        # store the edge capture registers
+        andi r14, r14, 0b0010 # check if KEY1 was pressed
+        bne r14, r0, KEY1_PRESSED
 
-        andi r11, r13, 0b0010 # check if KEY1 was pressed
-        bne r11, r0, KEY1_PRESSED
+        ldwio r14, 12(r12)        # store the edge capture registers
+        andi r14, r14, 0b0100 # check if KEY2 was pressed
+        bne r14, r0, KEY2_PRESSED
 
-        andi r11, r13, 0b0100 # check if KEY2 was pressed
-        bne r11, r0, KEY2_PRESSED
-
-        andi r11, r13, 0b1000 # check if KEY3 was pressed
-        bne r11, r0, KEY3_PRESSED
+TIMER_ISR:
+        ldw r14, 0(r9)            # load the global variable COUNT
+        addi r14, r14, 1          # increment COUNT
+        stw r14, 0(r9)            # store the global variable COUNT
+        movi r14, 0
+        stwio r14, 0(r13)         # clear the interrupt
+        br END_ISR
 
 KEY0_PRESSED:
-        movi r4, 0
-        movi r5, 0
-        call HEX_DISP
+        br ADJUST_TIMER
+
+KEY1_PRESSED:   
+        br DOUBLE_FREQ
+
+KEY2_PRESSED:  
+        br HALF_FREQ
+
+DOUBLE_FREQ:
+        movia r14, HIGHBITS
+        ldw r15, 0(r14)
+        srli r15, r15, 1
+        stw r15, 0(r14)
+        stwio r15, 12(r13) 
+
+        movia r14, LOWBITS
+        ldw r15, 0(r14)
+        srli r15, r15, 1
+        stw r15, 0(r14)
+        stwio r15, 8(r13)
+
+        movi r14, 0b111
+        stwio r14, 4(r13) #enable the counter and have it continue
+
         br END_ISR
 
-KEY1_PRESSED:
-        movi r4, 1
-        movi r5, 1
-        call HEX_DISP
+HALF_FREQ:
+        movia r14, HIGHBITS
+        ldw r15, 0(r14)
+        slli r15, r15, 1
+        stw r15, 0(r14)
+        stwio r15, 12(r13) 
+        
+        movia r14, LOWBITS
+        ldw r15, 0(r14)
+        slli r15, r15, 1
+        stw r15, 0(r14)
+        stwio r15, 8(r13)
+
+        movi r14, 0b111
+        stwio r14, 4(r13) #enable the counter and have it continue
+
         br END_ISR
 
-KEY2_PRESSED:
-        movi r4, 2
-        movi r5, 2
-        call HEX_DISP
-        br END_ISR
 
-KEY3_PRESSED:
-        movi r4, 3
-        movi r5, 3
-        call HEX_DISP
-        br END_ISR
+ADJUST_TIMER:
+    ldw r14, (r11)
+    beq r14, r0, CONTINUE_TIMER
+    br PAUSE_TIMER
 
-/*********************************************************************************
- * set where to go upon reset
- ********************************************************************************/
-.section .reset, "ax"
-        movia   r8, _start
-        jmp    r8
+CONTINUE_TIMER:
+    movi r14, 1
+    stw r14, 0(r11)
+    movi r14, 0b111
+    stwio r14, 4(r13)
+    br END_ISR
 
-/*********************************************************************************
- * Main program
- ********************************************************************************/
+PAUSE_TIMER:
+    movi r14, 0
+    stw r14, 0(r11)
+
+    movi r14, 0b1011 
+    stwio r14, 4(r13)
+    br END_ISR
+
+
+
+.equ KEY_BASE, 0xFF200050
+.equ LED_BASE, 0xFF200000
+.equ TIMER, 0xff202000
+
 .text
 .global  _start
 _start:
-        movia r15, KEY_BASE
-        /*
-        1. Initialize the stack pointer
-        2. set up keys to generate interrupts
-        3. enable interrupts in NIOS II
-        */
-        movia sp, 0x20000
-        movi r8, 1
-        wrctl ctl0, r8 # enable interrupts
-        movi r8, 0b10
-        wrctl ctl3, r8 # enable pushbutton interrupts
-        movi r8, 0b1111
-        stwio r8, 8(r15) # enable interrupts for all pushbuttons
-        stwio r8, 12(r15) # reset all edge capture bits
-
-IDLE:   br  IDLE
-
-HEX_DISP:   movia    r8, BIT_CODES         # starting address of the bit codes
-	    andi     r6, r4, 0x10	   # get bit 4 of the input into r6
-	    beq      r6, r0, not_blank 
-	    mov      r2, r0
-	    br       DO_DISP
-not_blank:  andi     r4, r4, 0x0f	   # r4 is only 4-bit
-            add      r4, r4, r8            # add the offset to the bit codes
-            ldb      r2, 0(r4)             # index into the bit codes
-
-#Display it on the target HEX display
-DO_DISP:    
-        movia    r8, HEX_BASE1         # load address
-        movi     r6,  4
-        blt      r5,r6, FIRST_SET      # hex4 and hex 5 are on 0xff200030
-        sub      r5, r5, r6            # if hex4 or hex5, we need to adjust the shift
-        addi     r8, r8, 0x0010        # we also need to adjust the address
-FIRST_SET:
-        slli     r5, r5, 3             # hex*8 shift is needed
-        addi     r7, r0, 0xff          # create bit mask so other values are not corrupted
-        sll      r7, r7, r5 
-        addi     r4, r0, -1
-        xor      r7, r7, r4  
-        sll      r4, r2, r5            # shift the hex code we want to write
-        ldwio    r5, 0(r8)             # read current value       
-        and      r5, r5, r7            # and it with the mask to clear the target hex
-        or       r5, r5, r4	           # or with the hex code
-        stwio    r5, 0(r8)		       # store back
-END:			
-        ret
 
 
+    /* Set up stack pointer */
+    movia sp, 0x20000
+    movia   r8, LED_BASE        # LEDR base address (0xFF200000)
+    movia   r9, COUNT           # global variable
+    movia   r11, RUN            #RUN global variable
+    movia   r12, KEY_BASE        # Key base address
+    movia r13, TIMER
+    call    CONFIG_TIMER        # configure the Timer
+    call    CONFIG_KEYS         # configure the KEYs port
+    /* Enable interrupts in the NIOS-II processor */
+    movi r14, 1
+    wrctl ctl0, r14 # enable interrupts
 
-.equ    KEY_BASE, 0xFF200050
-.equ HEX_BASE1, 0xff200020
-.equ HEX_BASE2, 0xff200030
+        movi r10, 0
+        stwio r10, 0(r8)          # clear the LEDR lights
 
-        
-BIT_CODES:  .byte     0b00111111, 0b00000110, 0b01011011, 0b01001111
-        .byte     0b01100110, 0b01101101, 0b01111101, 0b00000111
-        .byte     0b01111111, 0b01100111, 0b01110111, 0b01111100
-        .byte     0b00111001, 0b01011110, 0b01111001, 0b01110001
+    #store base addresses into registers
+
+LOOP:
+    ldw     r10, 0(r9)          # global variable
+    stwio   r10, 0(r8)          # write to the LEDR lights
+    br      LOOP
+
+CONFIG_TIMER:                # code not shown
+movia r14, LOWBITS
+stwio r14, 8(r13)
+movia r14, HIGHBITS
+stwio r14, 12(r13)
+movi r14, 0b111
+stwio r14, 4(r13) #enable the counter and have it continue
+ret
+
+CONFIG_KEYS:                # code not shown
+movi r14, 0b1111
+stwio r14, 8(r12) # enable interrupts for all pushbuttons
+stwio r14, 12(r12) # reset all edge capture bits 
+movi r14, 0b11
+wrctl ctl3, r14 # enable pushbutton interrupts in the processor
+ret
+
+.data
+/* Global variables */
+.global  COUNT
+COUNT:  .word    0x0            # used by timer
+
+.global  RUN                    # used by pushbutton KEYs
+RUN:    .word    0x1            # initial value to increment COUNT
+
+HIGHBITS: .word 0x00fd
+LOWBITS: .word 0x7840
+
+
 
 .end
-			
+
+
