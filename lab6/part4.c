@@ -41,7 +41,7 @@ int main()
         //caclulate the echoed output = input + damping factor * previous output with a delay of N samples
         out = input + DAMPING_FACTOR * buffer[bufferIndex];
         buffer[bufferIndex] = out;
-        bufferIndex = bufferIndex == 3199 ? 0 : bufferIndex + 1;
+        bufferIndex = bufferIndex == bufferSize - 1 ? 0 : bufferIndex + 1;
         //write the echoed output to the output FIFO
         audiop->ldata = out;
         audiop->rdata = out;

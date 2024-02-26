@@ -22,18 +22,18 @@ int main()
     volatile unsigned int* SW_ptr = (unsigned int*)SW_BASE;
     volatile unsigned int* LED_ptr = (unsigned int*)LEDR_BASE;
 
-    int writing_value = HIGH, swtich_value;
+    int writing_value = HIGH, switch_value;
     int current_count = 0, count_max;
 
     while (1)
     {   
         //read the switch value
-        swtich_value = *SW_ptr;
+        switch_value = *SW_ptr;
         //write to leds
-        *LED_ptr = swtich_value;
+        *LED_ptr = switch_value;
 
         //map the switch value to a frequency
-        count_max = mapToNumSamples(swtich_value) / 2;
+        count_max = mapToNumSamples(switch_value) / 2;
 
         if (current_count > count_max)
         {
@@ -58,43 +58,43 @@ int mapToNumSamples(int switch_value)
     double freq; 
     if (switch_value > 511) 
     {
-        freq = c_octave[9];
+        freq = c_octave[0];
     }
     else if (switch_value > 255)
     {
-        freq = c_octave[8];
+        freq = c_octave[1];
     }
     else if (switch_value > 127)
     {
-        freq = c_octave[7];
+        freq = c_octave[2];
     }
     else if (switch_value > 63)
     {
-        freq = c_octave[6];
+        freq = c_octave[3];
     }
     else if (switch_value > 31)
     {
-        freq = c_octave[5];
+        freq = c_octave[4];
     }
     else if (switch_value > 15)
     {
-        freq = c_octave[4];
+        freq = c_octave[5];
     }
     else if (switch_value > 7)
     {
-        freq = c_octave[3];
+        freq = c_octave[6];
     }
     else if (switch_value > 3)
     {
-        freq = c_octave[2];
+        freq = c_octave[7];
     }
     else if (switch_value > 1)
     {
-        freq = c_octave[1];
+        freq = c_octave[8];
     }
     else 
     {
-        freq = c_octave[0];
+        freq = c_octave[9];
     }
     return 8000 / freq;
 }

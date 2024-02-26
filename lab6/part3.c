@@ -21,18 +21,18 @@ int main()
     volatile unsigned int* SW_ptr = (unsigned int*)SW_BASE;
     volatile unsigned int* LED_ptr = (unsigned int*)LEDR_BASE;
 
-    int writing_value = HIGH, swtich_value;
+    int writing_value = HIGH, switch_value;
     int current_count = 0, count_max;
 
     while (1)
     {   
         //read the switch value
-        swtich_value = *SW_ptr;
+        switch_value = *SW_ptr;
         //write to leds
-        *LED_ptr = swtich_value;
+        *LED_ptr = switch_value;
 
         //map the switch value to a frequency
-        count_max = mapToNumSamples(swtich_value) / 2;
+        count_max = mapToNumSamples(switch_value) / 2;
 
         if (current_count > count_max)
         {
