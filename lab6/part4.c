@@ -15,11 +15,18 @@ struct audio_t {
 };
 
 struct audio_t *const audiop = ((struct audio_t *) AUDIO_BASE);
-
+const int bufferSize = 3200;
 int main() 
 {
 
-    int out, input;
+    int out, input, bufferIndex = 0;
+    int buffer[bufferSize];
+
+    //clear the buffer array
+    for (int i = 0; i < bufferSize; i++) 
+    {
+        buffer[i] = 0;
+    }
 
 
     while (1)
@@ -32,15 +39,11 @@ int main()
         //get input (same across both channels)
         input = audiop->ldata;
         //caclulate the echoed output = input + damping factor * previous output with a delay of N samples
-        out = calculateOutput();
+        out = input + DAMPING_FACTOR * buffer[bufferIndex];
+        buffer[bufferIndex] = out;
+        bufferIndex = bufferIndex == 3199 ? 0 : bufferIndex + 1;
         //write the echoed output to the output FIFO
         audiop->ldata = out;
         audiop->rdata = out;
     }   
-}
-
-//use recursion to calculate the output with echo
-int calculateOutput()
-{
-    return 0;
 }
