@@ -23,7 +23,8 @@ int main()
     volatile unsigned int* LED_ptr = (unsigned int*)LEDR_BASE;
 
     int writing_value = HIGH, switch_value;
-    int current_count = 0, count_max;
+    int current_count = 0, 
+    double count_max = 0;
 
     while (1)
     {   
@@ -53,7 +54,7 @@ int main()
 
 
 //maps the incoming switch value (0-123) to a frequency (100 to 2000) to a period to a number of 8KHz samples that is the period
-int mapToNumSamples(int switch_value) 
+double mapToNumSamples(int switch_value) 
 {
     double freq; 
     if (switch_value > 511) 
