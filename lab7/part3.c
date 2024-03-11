@@ -16,6 +16,7 @@ int main(void)
 {
     volatile int * pixel_ctrl_ptr = (int *)0xFF203020;
     int x_box[8], y_box[8], dx[8], dy[8];
+    short int color[7] = { 0x001F, 0x07E0, 0xF800, 0xF81F, 0x07FF, 0xF81F, 0x07E0 };
     // declare other variables(not shown)
     // initialize location and direction of rectangles(not shown)
 
@@ -58,7 +59,7 @@ int main(void)
         //draw line neon green
         for (int i = 0; i < 7; i++)
         {
-            draw_line(x_box[i], y_box[i], x_box[i + 1], y_box[i + 1], 0x07E0);
+            draw_line(x_box[i], y_box[i], x_box[i + 1], y_box[i + 1], color[i]);
         }
     
 
@@ -69,15 +70,18 @@ int main(void)
             y_box[i] = y_box[i] + dy[i];
 
             //check out of range y
+            //change color of attached line to random color
             if (y_box[i] == -1)
             {
                 y_box[i] = 0;
                 dy[i] = -dy[i];
+                color[i == 7 ? 0 : i] = rand() % 0xFFFF;
             }
             else if (y_box[i] + 1 == 240)
             {
                 y_box[i] = 238;
                 dy[i] = -dy[i];
+                color[i == 7 ? 0 : i] = rand() % 0xFFFF;
             }
 
             //check out of range x
@@ -85,11 +89,13 @@ int main(void)
             {
                 x_box[i] = 0;
                 dx[i] = -dx[i];
+                color[i == 7 ? 0 : i] = rand() % 0xFFFF;
             }
             else if (x_box[i] + 1 == 320)
             {
                 x_box[i] = 318;
                 dx[i] = -dx[i];
+                color[i == 7 ? 0 : i] = rand() % 0xFFFF;
             }
         }
 
